@@ -4,6 +4,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -61,6 +62,20 @@ public class ContactDAOImpl implements ContactDAO {
     @Override
     public List<Contact> list() {
         String sql = "SELECT * FROM contact_db.public.contact";
-        return jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(Contact.class));
+        // return jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(Contact.class));
+        // - значительно упрощает код, но взамен снижает производительность
+        List<Contact> contactList = jdbcTemplate.query(sql, new RowMapper<Contact>() {
+            @Override
+            public Contact mapRow(ResultSet rs, int rowNum) throws SQLException {
+                Contact contact = new Contact();
+                contact.setId(rs.getInt("contact_id"));
+                contact.setName(rs.getString("name"));
+                contact.setEmail(rs.getString("email"));
+                contact.setAddress(rs.getString("address"));
+                contact.setTelephone(rs.getString("telephone"));
+                return contact;
+            }
+        });
+        return contactList;
     }
 }
